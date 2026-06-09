@@ -2,14 +2,15 @@ import streamlit as st
 from openai import OpenAI
 import os
 import random
+import re
 from datetime import datetime
 
 # ==========================================
 # 1. INITIALIZATION & STYLING
 # ==========================================
 
-# Initialize the client pointing to NVIDIA's API Gateway using your key
-NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "Bearer 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")
+# Initialize the client pointing to NVIDIA's API Gateway
+NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "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")
 
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
@@ -58,7 +59,7 @@ st.markdown("""
         border: 1px solid rgba(59, 130, 246, 0.4);
         padding: 14px 18px;
         border-radius: 16px 16px 4px 16px;
-        margin-bottom: 6px;
+        margin-bottom: 2px;
         color: #ffffff !important;
     }
     
@@ -67,7 +68,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 14px 18px;
         border-radius: 16px 16px 16px 4px;
-        margin-bottom: 6px;
+        margin-bottom: 2px;
         color: #f1f5f9 !important;
     }
 
@@ -131,48 +132,48 @@ with st.sidebar:
         st.success(f"Loaded: {uploaded_file.name}")
         
     st.markdown("---")
-    st.markdown("**💡 Hackathon Demo Pro-Tip:**\nUpload a complex physics or engineering PDF to show the judges how the AI extracts data instantly.")
+    st.markdown("### 📡 Local Engine Status")
+    st.caption("• Basic Math Parsing: **Active**")
+    st.caption("• Newton's Rings Physics: **Active**")
 
 # ==========================================
-# 4. CHAT HISTORY (RENDERED ABOVE INPUT BOX)
+# 4. CHAT HISTORY (FIXED RENDER ENGINE)
 # ==========================================
 if st.session_state.chat_history:
     for message in st.session_state.chat_history:
         if message["role"] == "user":
             st.markdown(f"""
                 <div class="chat-bubble-user">
-                    <b>👤 {message['name']}:</b><br>{message['content']}
+                    <b>👤 {message['name']}:</b>
                 </div>
-                <div class="chat-meta">🕒 {message['time']}</div>
             """, unsafe_allow_html=True)
+            st.write(message['content'])
+            st.markdown(f'<div class="chat-meta">🕒 {message["time"]}</div>', unsafe_allow_html=True)
         else:
             st.markdown(f"""
                 <div class="chat-bubble-assistant">
-                    <b>🤖 {message['name']}:</b><br>{message['content']}
+                    <b>🤖 {message['name']}:</b>
                 </div>
-                <div class="chat-meta">🕒 {message['time']}</div>
             """, unsafe_allow_html=True)
+            st.markdown(message['content'])
+            st.markdown(f'<div class="chat-meta">🕒 {message["time"]}</div>', unsafe_allow_html=True)
+            
     st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin: 25px 0;'>", unsafe_allow_html=True)
 
 # ==========================================
 # 5. QUICK ACTIONS CARD SYSTEM
 # ==========================================
 st.write("✨ **Quick Actions (Click to try):**")
-card1, card2, card3 = st.columns(3)
+card1, card2 = st.columns(2)
 
 with card1:
-    if st.button("📝 Summarize Syllabus"):
-        st.session_state.preset_query = "Provide a high-level summary of the essential topics from my study material."
+    if st.button("🔬 Explain Newton's Rings"):
+        st.session_state.preset_query = "What is Newton's ring?"
         st.rerun()
 
 with card2:
-    if st.button("❓ Create a Quick Quiz"):
-        st.session_state.preset_query = "Generate 3 practice questions along with their answers from this topic."
-        st.rerun()
-
-with card3:
-    if st.button("🧠 Simplify Hard Terms"):
-        st.session_state.preset_query = "Break down the most complex engineering or technical definitions here into plain english."
+    if st.button("➕ Try Simple Math"):
+        st.session_state.preset_query = "What is 45 + 55?"
         st.rerun()
 
 # ==========================================
@@ -194,43 +195,79 @@ if user_question.strip() != "" and user_question != st.session_state.last_proces
     # Generate timestamp text string
     timestamp = datetime.now().strftime("%I:%M %p")
     
-    # Standardize input for quick local string matching
-    clean_input = user_question.strip().lower().replace("?", "").replace("!", "").replace(".", "")
+    # Standardize input for keyword validation
+    clean_input = user_question.strip().lower()
     local_reply = None
 
-    # --- LOCAL CONVERSATION DATA MAP (INTENTS) ---
-    student_intents = {
-        "greetings": {
-            "keywords": ["hello", "hi", "hey", "greetings", "yo"],
-            "responses": [
-                "Hello! 👋 Ready to crush some study goals today? What are we working on?",
-                "Hello! 🧠 I am your Personal AI Tutor. What subject or concept are we exploring today?"
-            ]
-        },
-        "status_check": {
-            "keywords": ["how are you", "hows it going", "you good"],
-            "responses": [
-                "I'm running at 100% efficiency and fully charged! 🚀 Ready to break down notes or debug code. How are you doing?"
-            ]
-        }
-    }
+    # --------------------------------------------------------
+    # CLEAN OFFLINE LOGIC ENGINE
+    # --------------------------------------------------------
+    
+    # 1. NEWTON'S RINGS INTERCEPTOR
+    if "newton" in clean_input and "ring" in clean_input:
+        local_reply = """
+### 🔬 Newton's Rings (Physics - Optics)
 
-    # Match intent loop
-    for intent, data in student_intents.items():
-        if any(keyword in clean_input for keyword in data["keywords"]):
-            local_reply = random.choice(data["responses"])
-            break
+**Newton's Rings** is a classic interference pattern created when monochromatic light reflects between a spherical surface (a plano-convex lens) and an adjacent flat glass plate.
 
-    # --- COMMIT SESSIONS ---
+#### How it Works:
+* When a plano-convex lens is placed on a flat glass plate, a **variable-thickness air film** is formed between them.
+* Light hitting this structure reflects from both the top surface of the plate and the bottom surface of the lens.
+* These two reflected light rays interfere constructively or destructively depending on the optical path difference, forming **concentric alternating bright and dark rings**.
+
+#### Key Characteristics:
+1. **Center is Dark:** Due to a phase change of 180 degrees (or $\pi$ radians) when light reflects from the denser glass plate interface.
+2. **Rings get Closer:** The fringe width decreases as the radius increases because the thickness of the air film does not change linearly.
+
+#### Formula for Ring Diameters:
+* **For Dark Rings:** $$D_n^2 = 4n\lambda R$$
+* **For Bright Rings:** $$D_n^2 = 2(2n-1)\lambda R$$
+
+*(Where $D_n$ is the diameter of the nth ring, $n$ is the ring number, $\lambda$ is the wavelength of light, and $R$ is the radius of curvature of the lens).*
+"""
+
+    # 2. BASIC MATHEMATICS INLINE PARSER
+    else:
+        numbers = re.findall(r'\d+\.?\d*', clean_input)
+        
+        if len(numbers) >= 2:
+            num1 = float(numbers[0])
+            num2 = float(numbers[1])
+            
+            if "+" in clean_input or "add" in clean_input or "plus" in clean_input or "sum" in clean_input:
+                local_reply = f"📊 **Math Result (Local Calculation):** \n{num1} + {num2} = **{num1 + num2}**"
+                
+            elif "-" in clean_input or "subtract" in clean_input or "minus" in clean_input or "diff" in clean_input:
+                if "from" in clean_input:
+                    local_reply = f"📊 **Math Result (Local Calculation):** \n{num2} - {num1} = **{num2 - num1}**"
+                else:
+                    local_reply = f"📊 **Math Result (Local Calculation):** \n{num1} - {num2} = **{num1 - num2}**"
+                    
+            elif "/" in clean_input or "divide" in clean_input or "by" in clean_input:
+                if num2 == 0:
+                    local_reply = "⚠️ **Math Error:** Division by zero is undefined."
+                else:
+                    local_reply = f"📊 **Math Result (Local Calculation):** \n{num1} ÷ {num2} = **{num1 / num2:.4f}**"
+                    
+            elif "x" in clean_input or "*" in clean_input or "multiply" in clean_input or "times" in clean_input:
+                local_reply = f"📊 **Math Result (Local Calculation):** \n{num1} × {num2} = **{num1 * num2}**"
+
+    # --- CONVERSATIONAL GREETING INTERCEPTOR ---
+    if not local_reply:
+        if any(w in clean_input for w in ["hello", "hi", "hey"]):
+            local_reply = "Hello! 👋 Your offline math parser and Newton's ring modules are loaded. How can I help you study today?"
+
+    # ==========================================
+    # 7. RESPONSE DELIVERY SYSTEM
+    # ==========================================
     if local_reply:
-        st.session_state.chat_history.append({"role": "user", "name": "You", "time": timestamp, "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "name": "Assistant", "time": timestamp, "content": local_reply})
+        st.session_state.chat_history.append({"role": "assistant", "name": "Assistant (Local Mode)", "time": timestamp, "content": local_reply})
         st.rerun()
         
     else:
-        with st.spinner("Analyzing context..."):
+        # Fallback to Nvidia Cloud Gateway if user asks complex out-of-bounds questions
+        with st.spinner("Analyzing context via Cloud Model..."):
             try:
-                # Call NVIDIA Gateway with Gemma 3
                 completion = client.chat.completions.create(
                     model="google/gemma-3n-e2b-it",
                     messages=[
@@ -249,4 +286,4 @@ if user_question.strip() != "" and user_question != st.session_state.last_proces
 
             except Exception as e:
                 st.toast("Error contacting API endpoint", icon="⏳")
-                st.error("🚀 **The AI Brain is overloaded!** Our servers are experiencing heavy traffic. Please click 'Ask Assistant' again in a few seconds.")
+                st.error("🚀 **The AI Brain is overloaded!** Our servers are experiencing heavy traffic. Please press Enter again.")
